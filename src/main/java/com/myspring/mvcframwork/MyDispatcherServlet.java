@@ -1,15 +1,14 @@
-package com.myspring.mvcframwork.v1;
+package com.myspring.mvcframwork;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletConfig;
@@ -18,10 +17,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.myspring.mvcframwork.annotaion.MyAutoWired;
-import com.myspring.mvcframwork.annotaion.MyController;
-import com.myspring.mvcframwork.annotaion.MyRequestMapping;
-import com.myspring.mvcframwork.annotaion.MyService;
+import com.myspring.mvcframwork.annotaion.*;
 
 /**
  * @author linjp
@@ -35,7 +31,7 @@ public class MyDispatcherServlet extends HttpServlet {
 
     private Map<String, Object> ioc = new ConcurrentHashMap<>();
 
-    private Map<String, Method> handlerMap = new ConcurrentHashMap<>();
+    private List<HandlerMapper> handlerMappers = new ArrayList<>();
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -71,10 +67,11 @@ public class MyDispatcherServlet extends HttpServlet {
             Method[] methods = clazz.getMethods();
             for (Method method : methods) {
                 if (method.isAnnotationPresent(MyRequestMapping.class)) {
-                    String url = (baseUrl + "/"
-                            + method.getAnnotation(MyRequestMapping.class).value()).replaceAll("/+", "/");
-                    handlerMap.put(url, method);
-                    System.out.println("mapped" + url + "," + method);
+                    String url = (baseUrl + "/" + method.getAnnotation(MyRequestMapping.class).value()).replaceAll("/+",
+                            "/");
+                    HandlerMapper handlerMapper = new HandlerMapper(url, method, entry.getValue());
+                    handlerMappers.add(handlerMapper);
+                    System.out.println("mapped:" + handlerMapper);
                 }
             }
 
@@ -199,17 +196,127 @@ public class MyDispatcherServlet extends HttpServlet {
     }
 
     private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestURI = req.getRequestURI();
-        if (!handlerMap.containsKey(requestURI)) {
+        HandlerMapper handlerMapper = getHandler(req);
+
+        if (handlerMapper == null) {
             resp.getWriter().write("404 NOT FOUND");
+            return;
         }
-        Method method = handlerMap.get(requestURI);
-        String beanName = toLowerFirstCase(method.getDeclaringClass().getSimpleName());
+
+        Class<?>[] parameterTypes = handlerMapper.getMethod().getParameterTypes();
+        Map<String, String[]> parameterMap = req.getParameterMap();
+        Object[] parameterValues = new Object[parameterTypes.length];
+        for (Map.Entry<String, String[]> param : parameterMap.entrySet()) {
+            String value = Arrays.toString(param.getValue()).replaceAll("\\[|\\]", "").replaceAll("\\s", ",");
+            if (!handlerMapper.getParamIndexMap().containsKey(param.getKey())) {
+                continue;
+            }
+            Integer index = handlerMapper.getParamIndexMap().get(param.getKey());
+            parameterValues[index] = convert(parameterTypes[index], value);
+        }
+
+        if (handlerMapper.getParamIndexMap().containsKey(HttpServletRequest.class.getName())) {
+            int reqIndex = handlerMapper.getParamIndexMap().get(HttpServletRequest.class.getName());
+            parameterValues[reqIndex] = req;
+        }
+
+        if (handlerMapper.getParamIndexMap().containsKey(HttpServletResponse.class.getName())) {
+            int responseIndex = handlerMapper.getParamIndexMap().get(HttpServletResponse.class.getName());
+            parameterValues[responseIndex] = resp;
+        }
+
         try {
-            Map<String, String[]> parameterMap = req.getParameterMap();
-            method.invoke(ioc.get(beanName), new Object[] { req, resp, parameterMap.get("name")[0] });
-        } catch (Exception e) {
+            Object result = handlerMapper.getMethod().invoke(handlerMapper.getController(), parameterValues);
+            if (result == null || result instanceof Void) {
+                return;
+            }
+            resp.getWriter().write(result.toString());
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Object convert(Class<?> parameterType, String value) {
+        if (value == null) {
+            return value;
+        }
+        if (parameterType == Integer.class) {
+            return Integer.parseInt(value);
+        }
+        return value;
+    }
+
+    private HandlerMapper getHandler(HttpServletRequest req) {
+        if (handlerMappers.isEmpty()) {
+            return null;
+        }
+        String requestURI = req.getRequestURI();
+        for (HandlerMapper handlerMapper : handlerMappers) {
+            if (handlerMapper.getUrl().equals(requestURI)) {
+                return handlerMapper;
+            }
+        }
+        return null;
+    }
+
+    public class HandlerMapper {
+        private String url;
+        private Method method;
+        private Object controller;
+        private Map<String, Integer> paramIndexMap;
+
+        public HandlerMapper(String url, Method method, Object controller) {
+            this.url = url;
+            this.method = method;
+            this.controller = controller;
+            paramIndexMap = new HashMap<>();
+            putParam(method);
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public Method getMethod() {
+            return method;
+        }
+
+        public Object getController() {
+            return controller;
+        }
+
+        public Map<String, Integer> getParamIndexMap() {
+            return paramIndexMap;
+        }
+
+        @Override
+        public String toString() {
+            return "HandlerMapper{" + "url='" + url + '\'' + ", method=" + method + ", controller=" + controller
+                    + ", paramIndexMap=" + paramIndexMap + '}';
+        }
+
+        private void putParam(Method method) {
+            Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+            for (int i = 0; i < parameterAnnotations.length; i++) {
+                for (Annotation annotation : parameterAnnotations[i]) {
+                    if (annotation instanceof MyRequestParam) {
+                        String paramName = ((MyRequestParam) annotation).name();
+                        paramIndexMap.put(paramName, i);
+                    }
+                }
+
+            }
+
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> type = parameterTypes[i];
+                if (type == HttpServletRequest.class || type == HttpServletResponse.class) {
+                    paramIndexMap.put(type.getName(), i);
+                }
+            }
+
         }
     }
 

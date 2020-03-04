@@ -1,11 +1,11 @@
 package com.myspring.mvc;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.myspring.mvcframwork.annotaion.MyController;
 import com.myspring.mvcframwork.annotaion.MyRequestMapping;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.myspring.mvcframwork.annotaion.MyRequestParam;
 
 /**
  * @author linjp
@@ -17,12 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 public class DemoController {
 
     @MyRequestMapping("/get")
-    public void get(HttpServletRequest req, HttpServletResponse resp, String name) throws Exception {
+    public void get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "name") String name)
+            throws Exception {
         resp.getWriter().write("my Name is " + name);
     }
 
-    @MyRequestMapping("/list")
-    public void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        resp.getWriter().write("list");
+    @MyRequestMapping("/add")
+    public Integer get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "a") Integer a,
+            @MyRequestParam(name = "b") Integer b) throws Exception {
+        return a + b;
     }
 }
