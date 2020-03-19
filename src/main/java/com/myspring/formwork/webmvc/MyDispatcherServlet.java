@@ -1,4 +1,4 @@
-package com.myspring.mvcframwork;
+package com.myspring.formwork.webmvc;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.myspring.mvcframwork.annotaion.*;
+import com.myspring.formwork.annotation.MyAutoWired;
+import com.myspring.formwork.annotation.MyController;
+import com.myspring.formwork.annotation.MyRequestMapping;
+import com.myspring.formwork.annotation.MyRequestParam;
+import com.myspring.formwork.annotation.MyService;
 
 /**
  * @author linjp

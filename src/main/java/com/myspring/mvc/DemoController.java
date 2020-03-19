@@ -1,11 +1,12 @@
 package com.myspring.mvc;
 
+import com.myspring.formwork.annotation.MyAutoWired;
+import com.myspring.formwork.annotation.MyController;
+import com.myspring.formwork.annotation.MyRequestMapping;
+import com.myspring.formwork.annotation.MyRequestParam;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.myspring.mvcframwork.annotaion.MyController;
-import com.myspring.mvcframwork.annotaion.MyRequestMapping;
-import com.myspring.mvcframwork.annotaion.MyRequestParam;
 
 /**
  * @author linjp
@@ -15,6 +16,9 @@ import com.myspring.mvcframwork.annotaion.MyRequestParam;
 @MyRequestMapping("/demo")
 @MyController
 public class DemoController {
+
+    @MyAutoWired
+    private QueryService queryService;
 
     @MyRequestMapping("/get")
     public void get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "name") String name)

@@ -1,4 +1,4 @@
-package com.myspring.mvcframwork.annotaion;
+package com.myspring.formwork.annotation;
 
 import org.springframework.core.annotation.AliasFor;
 
