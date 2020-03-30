@@ -5,19 +5,20 @@
  * You shall not disclose such Confidential Information and shall use it only
  * in accordance with the terms of the license agreement you entered into with GuaHao.com.
  */
-package com.myspring.mvc;
+package com.myspring.test;
 
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyService;
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
- * @author linjp
+ * @author ljp05
  * @version V1.0
- * @since 2020-03-17 21:37
+ * @since 2020-03-30 20:18
  */
-@MyService
-public class QueryService {
+@Component
+public class ClassB {
+    @Resource
+    private ClassA classA;
 
-    @MyAutoWired(value = "demoController")
-    private DemoController demoController;
 }

@@ -4,6 +4,10 @@ import com.myspring.formwork.annotation.MyAutoWired;
 import com.myspring.formwork.annotation.MyController;
 import com.myspring.formwork.annotation.MyRequestMapping;
 import com.myspring.formwork.annotation.MyRequestParam;
+import com.myspring.formwork.webmvc.servlet.MyModelAndView;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,18 +21,25 @@ import javax.servlet.http.HttpServletResponse;
 @MyController
 public class DemoController {
 
-    @MyAutoWired
+    @MyAutoWired(value = "queryService")
     private QueryService queryService;
 
     @MyRequestMapping("/get")
-    public void get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "name") String name)
+    public MyModelAndView get(HttpServletRequest req, HttpServletResponse resp,
+        @MyRequestParam(name = "name") String name)
             throws Exception {
-        resp.getWriter().write("my Name is " + name);
+        Map<String, Object> map = new HashMap<>(4);
+        map.put("name", "tom");
+        MyModelAndView mv = new MyModelAndView("get", map);
+        return mv;
     }
 
     @MyRequestMapping("/add")
-    public Integer get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "a") Integer a,
+    public MyModelAndView get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "a") Integer a,
             @MyRequestParam(name = "b") Integer b) throws Exception {
-        return a + b;
+        Map<String, Object> map = new HashMap<>(4);
+        map.put("result", a + b);
+        MyModelAndView mv = new MyModelAndView("add", map);
+        return mv;
     }
 }

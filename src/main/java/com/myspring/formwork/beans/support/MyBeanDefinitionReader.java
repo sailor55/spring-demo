@@ -7,8 +7,6 @@
  */
 package com.myspring.formwork.beans.support;
 
-import com.myspring.formwork.beans.config.MyBeanDefinition;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +14,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import com.myspring.formwork.beans.config.MyBeanDefinition;
 
 /**
  * @author linjp
@@ -104,11 +104,7 @@ public class MyBeanDefinitionReader {
         }
     }
 
-    private String toLowerFirstCase(String beanName) {
-        char[] chars = beanName.toCharArray();
-        chars[0] += 32;
-        return String.valueOf(chars);
-    }
+
 
     public Properties getConfig() {
         return config;

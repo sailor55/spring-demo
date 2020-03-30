@@ -7,12 +7,13 @@
  */
 package com.myspring.formwork.context.support;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import com.myspring.formwork.beans.config.MyBeanDefinition;
 import com.myspring.formwork.beans.support.MyBeanDefinitionReader;
 import com.myspring.formwork.beans.support.MyDefaultListableBeanFactory;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author linjp
@@ -24,6 +25,7 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory {
     private MyBeanDefinitionReader reader;
 
     private String[] configLocations;
+    private Object config;
 
     public MyApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
@@ -53,8 +55,18 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory {
 
     private void doRegisterBeanDifination(List<MyBeanDefinition> beanDefinitions) {
         for (MyBeanDefinition beanDefinition : beanDefinitions) {
-            super.beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
+            super.beanDefinitionMap.put(toLowerFirstCase(beanDefinition.getFactoryBeanName()), beanDefinition);
         }
 
+    }
+
+    public Properties getConfig() {
+        return reader.getConfig();
+    }
+
+    private String toLowerFirstCase(String beanName) {
+        char[] chars = beanName.toCharArray();
+        chars[0] += 32;
+        return String.valueOf(chars);
     }
 }

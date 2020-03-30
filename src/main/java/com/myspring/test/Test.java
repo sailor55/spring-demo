@@ -18,5 +18,9 @@ public class Test {
     public static void main(String[] args) {
         MyApplicationContext applicationContext = new MyApplicationContext("application.properties");
         System.out.println(applicationContext);
+        // ApplicationContext ctx = new
+        // AnnotationConfigApplicationContext("com.myspring.test");
+        // ClassA bean = ctx.getBean(ClassA.class);
+        // System.out.println(bean);
     }
 }

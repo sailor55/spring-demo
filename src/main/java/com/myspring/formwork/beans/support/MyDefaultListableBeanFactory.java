@@ -7,6 +7,10 @@
  */
 package com.myspring.formwork.beans.support;
 
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.myspring.formwork.annotation.MyAutoWired;
 import com.myspring.formwork.annotation.MyController;
 import com.myspring.formwork.annotation.MyService;
@@ -14,10 +18,6 @@ import com.myspring.formwork.beans.MyBeanFactory;
 import com.myspring.formwork.beans.MyBeanWrapper;
 import com.myspring.formwork.beans.config.MyBeanDefinition;
 import com.myspring.formwork.context.support.MyAbstractApplicationContext;
-
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author linjp
@@ -32,27 +32,37 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
 
     private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(16);
 
+    private final Map<String, Object> singletonFactories = new ConcurrentHashMap<>(16);
+
     @Override
     public Object getBean(String beanName) {
+        if (singletonObjects.containsKey(beanName)) {
+            return singletonObjects.get(beanName);
+        }
+        return doCreateBean(beanName);
+    }
+
+    private Object doCreateBean(String beanName) {
         MyBeanDefinition myBeanDefinition = beanDefinitionMap.get(beanName);
-        //1.初始化
+        // 1.初始化
         MyBeanWrapper myBeanWrapper = instantiateBean(beanName, myBeanDefinition);
-        //2.将BeanWrapper放置到ioc容器中
+        // 2.将BeanWrapper放置到ioc容器中
         factoryBeanInstanceCache.put(beanName, myBeanWrapper);
-        //3.注入
+        // 3.注入
         populateBean(beanName, myBeanDefinition, myBeanWrapper);
+        singletonObjects.put(beanName, myBeanWrapper.getWrappedInstance());
         return myBeanWrapper.getWrappedInstance();
     }
 
     private MyBeanWrapper instantiateBean(String beanName, MyBeanDefinition myBeanDefinition) {
         String className = myBeanDefinition.getBeanClassName();
         Object instance = null;
-        if (singletonObjects.containsKey(className)) {
-            instance = singletonObjects.get(className);
+        if (singletonObjects.containsKey(beanName)) {
+            instance = singletonObjects.get(beanName);
         } else {
             try {
                 instance = Class.forName(className).newInstance();
-                singletonObjects.put(className, instance);
+                singletonFactories.put(beanName, instance);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -83,8 +93,14 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
             field.setAccessible(true);
 
             try {
-                field.set(myBeanWrapper.getWrappedInstance(),
-                    factoryBeanInstanceCache.get(autoWiredName).getWrappedInstance());
+                Object myAutoWiredBean = null;
+                if (singletonFactories.containsKey(autoWiredName)) {
+                    myAutoWiredBean = singletonFactories.get(autoWiredName);
+                } else {
+                    myAutoWiredBean = getBean(autoWiredName);
+                }
+
+                field.set(myBeanWrapper.getWrappedInstance(), myAutoWiredBean);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -93,4 +109,11 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
 
     }
 
+    public int getBeanDefinitionCount() {
+        return beanDefinitionMap.size();
+    }
+
+    public String[] getBeanDefinitionNames() {
+        return beanDefinitionMap.keySet().toArray(new String[beanDefinitionMap.keySet().size()]);
+    }
 }
