@@ -1,16 +1,16 @@
 package com.myspring.mvc;
 
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyController;
-import com.myspring.formwork.annotation.MyRequestMapping;
-import com.myspring.formwork.annotation.MyRequestParam;
-import com.myspring.formwork.webmvc.servlet.MyModelAndView;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.myspring.formwork.annotation.MyAutoWired;
+import com.myspring.formwork.annotation.MyController;
+import com.myspring.formwork.annotation.MyRequestMapping;
+import com.myspring.formwork.annotation.MyRequestParam;
+import com.myspring.formwork.webmvc.servlet.MyModelAndView;
 
 /**
  * @author linjp
@@ -38,7 +38,7 @@ public class DemoController {
     public MyModelAndView get(HttpServletRequest req, HttpServletResponse resp, @MyRequestParam(name = "a") Integer a,
             @MyRequestParam(name = "b") Integer b) throws Exception {
         Map<String, Object> map = new HashMap<>(4);
-        map.put("result", a + b);
+        map.put("result", queryService.add(a, b));
         MyModelAndView mv = new MyModelAndView("add", map);
         return mv;
     }

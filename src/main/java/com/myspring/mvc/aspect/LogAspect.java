@@ -5,23 +5,24 @@
  * You shall not disclose such Confidential Information and shall use it only
  * in accordance with the terms of the license agreement you entered into with GuaHao.com.
  */
-package com.myspring.mvc;
-
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyService;
+package com.myspring.mvc.aspect;
 
 /**
  * @author linjp
  * @version V1.0
- * @since 2020-03-17 21:37
+ * @since 2020-04-04 17:01
  */
-@MyService
-public class QueryService {
+public class LogAspect {
 
-    @MyAutoWired(value = "demoController")
-    private DemoController demoController;
+    public void before() {
+        System.out.println("===============before====================");
+    }
 
-    public Integer add(Integer a, Integer b) {
-        return a + b;
+    public void after() {
+        System.out.println("===============after====================");
+    }
+
+    public void afterTrowing() {
+        System.out.println("===============afterThrowing====================");
     }
 }

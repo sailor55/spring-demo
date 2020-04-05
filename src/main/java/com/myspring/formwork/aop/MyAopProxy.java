@@ -5,23 +5,15 @@
  * You shall not disclose such Confidential Information and shall use it only
  * in accordance with the terms of the license agreement you entered into with GuaHao.com.
  */
-package com.myspring.mvc;
-
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyService;
+package com.myspring.formwork.aop;
 
 /**
  * @author linjp
  * @version V1.0
- * @since 2020-03-17 21:37
+ * @since 2020-04-04 17:04
  */
-@MyService
-public class QueryService {
+public interface MyAopProxy {
+    Object getProxy();
 
-    @MyAutoWired(value = "demoController")
-    private DemoController demoController;
-
-    public Integer add(Integer a, Integer b) {
-        return a + b;
-    }
+    Object getProxy(ClassLoader classLoader);
 }

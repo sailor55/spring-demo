@@ -5,23 +5,21 @@
  * You shall not disclose such Confidential Information and shall use it only
  * in accordance with the terms of the license agreement you entered into with GuaHao.com.
  */
-package com.myspring.mvc;
+package com.myspring.formwork.aop.aspect;
 
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyService;
+import java.lang.reflect.Method;
 
 /**
  * @author linjp
  * @version V1.0
- * @since 2020-03-17 21:37
+ * @since 2020-04-05 20:11
  */
-@MyService
-public class QueryService {
+public interface MyJointPoint {
 
-    @MyAutoWired(value = "demoController")
-    private DemoController demoController;
+    Method getMethod();
 
-    public Integer add(Integer a, Integer b) {
-        return a + b;
-    }
+    Object[] getArgs();
+
+    Object getTarget();
+
 }

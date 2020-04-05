@@ -22,11 +22,6 @@ import com.myspring.formwork.beans.support.MyDefaultListableBeanFactory;
  */
 public class MyApplicationContext extends MyDefaultListableBeanFactory {
 
-    private MyBeanDefinitionReader reader;
-
-    private String[] configLocations;
-    private Object config;
-
     public MyApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
         refresh();

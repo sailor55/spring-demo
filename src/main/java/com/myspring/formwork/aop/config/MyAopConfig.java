@@ -5,23 +5,22 @@
  * You shall not disclose such Confidential Information and shall use it only
  * in accordance with the terms of the license agreement you entered into with GuaHao.com.
  */
-package com.myspring.mvc;
+package com.myspring.formwork.aop.config;
 
-import com.myspring.formwork.annotation.MyAutoWired;
-import com.myspring.formwork.annotation.MyService;
+import lombok.Data;
 
 /**
  * @author linjp
  * @version V1.0
- * @since 2020-03-17 21:37
+ * @since 2020-04-05 16:15
  */
-@MyService
-public class QueryService {
+@Data
+public class MyAopConfig {
+    private String pointCut;
+    private String aspectClass;
+    private String aspectBefore;
+    private String aspectAfter;
+    private String aspectAfterThrow;
+    private String aspectAfterThrowingName;
 
-    @MyAutoWired(value = "demoController")
-    private DemoController demoController;
-
-    public Integer add(Integer a, Integer b) {
-        return a + b;
-    }
 }

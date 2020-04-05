@@ -14,6 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.myspring.formwork.annotation.MyAutoWired;
 import com.myspring.formwork.annotation.MyController;
 import com.myspring.formwork.annotation.MyService;
+import com.myspring.formwork.aop.MyAopProxy;
+import com.myspring.formwork.aop.MyCglibAopProxy;
+import com.myspring.formwork.aop.MyJdkDynamicAopProxy;
+import com.myspring.formwork.aop.config.MyAopConfig;
+import com.myspring.formwork.aop.support.MyAdvisedSupport;
 import com.myspring.formwork.beans.MyBeanFactory;
 import com.myspring.formwork.beans.MyBeanWrapper;
 import com.myspring.formwork.beans.config.MyBeanDefinition;
@@ -34,6 +39,10 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
 
     private final Map<String, Object> singletonFactories = new ConcurrentHashMap<>(16);
 
+    protected MyBeanDefinitionReader reader;
+
+    protected String[] configLocations;
+
     @Override
     public Object getBean(String beanName) {
         if (singletonObjects.containsKey(beanName)) {
@@ -45,7 +54,9 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
     private Object doCreateBean(String beanName) {
         MyBeanDefinition myBeanDefinition = beanDefinitionMap.get(beanName);
         // 1.初始化
-        MyBeanWrapper myBeanWrapper = instantiateBean(beanName, myBeanDefinition);
+        Object instance = instantiateBean(beanName, myBeanDefinition);
+        // 把对象封装到beanWrapper
+        MyBeanWrapper myBeanWrapper = new MyBeanWrapper(instance);
         // 2.将BeanWrapper放置到ioc容器中
         factoryBeanInstanceCache.put(beanName, myBeanWrapper);
         // 3.注入
@@ -54,21 +65,48 @@ public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext i
         return myBeanWrapper.getWrappedInstance();
     }
 
-    private MyBeanWrapper instantiateBean(String beanName, MyBeanDefinition myBeanDefinition) {
+    private Object instantiateBean(String beanName, MyBeanDefinition myBeanDefinition) {
         String className = myBeanDefinition.getBeanClassName();
         Object instance = null;
         if (singletonObjects.containsKey(beanName)) {
             instance = singletonObjects.get(beanName);
         } else {
             try {
-                instance = Class.forName(className).newInstance();
+                Class<?> targetClass = Class.forName(className);
+                instance = targetClass.newInstance();
+                MyAdvisedSupport config = instanceAopConfig();
+                config.setTarget(instance);
+                config.setTargetClass(targetClass);
+                // 符合切面规则的类则创建代理对象
+                if (config.pointCutMatch()) {
+                    instance = createProxy(config).getProxy();
+                }
                 singletonFactories.put(beanName, instance);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        return new MyBeanWrapper(instance);
+        return instance;
+    }
+
+    private MyAopProxy createProxy(MyAdvisedSupport config) {
+        Class<?> targetClass = config.getTargetClass();
+        if (targetClass.getInterfaces().length > 0) {
+            return new MyJdkDynamicAopProxy(config);
+        }
+        return new MyCglibAopProxy(config);
+    }
+
+    private MyAdvisedSupport instanceAopConfig() {
+        MyAopConfig config = new MyAopConfig();
+        config.setPointCut(this.reader.getConfig().getProperty("pointCut"));
+        config.setAspectClass(this.reader.getConfig().getProperty("aspectClass"));
+        config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));
+        config.setAspectAfterThrow(this.reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowingName(this.reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new MyAdvisedSupport(config);
     }
 
     private void populateBean(String beanName, MyBeanDefinition myBeanDefinition, MyBeanWrapper myBeanWrapper) {
